@@ -1,0 +1,19 @@
+# SwiftFormat config
+
+--swiftversion 6.2
+--languagemode 6
+
+--indent 4
+--tabwidth 4
+--maxwidth 120
+
+--wraparguments beforefirst
+--wrapparameters beforefirst
+--wrapcollections beforefirst
+--wrapconditions afterfirst
+
+--commas inline
+--semicolons never
+--trimwhitespace always
+
+--exclude .build,.swiftpm,DerivedData,Package.resolved
