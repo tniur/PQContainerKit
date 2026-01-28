@@ -8,14 +8,18 @@ let package = Package(
         .iOS(.v26)
     ],
     products: [
-        .library(
-            name: "PQContainerKit",
-            targets: ["PQContainerKit"]
-        ),
+        .library(name: "PQContainerKit", targets: ["PQContainerKit"])
+    ],
+    dependencies: [
+        .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.59.0"),
+        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.63.2")
     ],
     targets: [
         .target(
-            name: "PQContainerKit"
+            name: "PQContainerKit",
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+            ]
         ),
         .testTarget(
             name: "PQContainerKitTests",
