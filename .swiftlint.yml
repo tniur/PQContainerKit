@@ -26,21 +26,21 @@ opt_in_rules:
   - redundant_nil_coalescing
   - sorted_first_last
   - toggle_bool
-  
+
 line_length:
   warning: 120
   error: 160
   ignores_comments: true
   ignores_urls: true
-  
+
 file_length:
   warning: 500
   error: 800
-  
+
 cyclomatic_complexity:
   warning: 10
   error: 20
-  
+
 identifier_name:
   min_length:
     warning: 2
@@ -57,7 +57,7 @@ identifier_name:
     - i
     - j
     - URL
-    
+
 type_name:
   min_length: 3
   max_length:
@@ -72,8 +72,9 @@ force_cast:
 custom_rules:
   no_print:
     name: "Do not use print/debugPrint/dump"
-    regex: '\b(print|debugPrint|dump)\s*\('
+    regex: '\\b(print|debugPrint|dump)\\s*\\('
     message: "Do not use print/debugPrint/dump in package; use logger."
     severity: warning
-    included: 'Sources/.*\.swift'
-
+    included:
+      - 'Sources/.*\\.swift'
+      - 'Tests/.*\\.swift'
