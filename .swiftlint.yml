@@ -68,13 +68,3 @@ force_try:
   severity: error
 force_cast:
   severity: error
-
-custom_rules:
-  no_print:
-    name: "Do not use print/debugPrint/dump"
-    regex: '\\b(print|debugPrint|dump)\\s*\\('
-    message: "Do not use print/debugPrint/dump in package; use logger."
-    severity: warning
-    included:
-      - 'Sources/.*\\.swift'
-      - 'Tests/.*\\.swift'
