@@ -24,7 +24,10 @@ let package = Package(
         ),
         .testTarget(
             name: "PQContainerKitTests",
-            dependencies: ["PQContainerKit"]
+            dependencies: ["PQContainerKit"],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+            ]
         ),
     ]
 )
