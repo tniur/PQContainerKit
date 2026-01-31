@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  lint-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Resolve
+        run: swift package resolve
+
+      - name: SwiftFormat (lint)
+        run: swift package plugin --allow-writing-to-package-directory swiftformat --lint
+
+      - name: SwiftLint
+        run: swift package --allow-writing-to-package-directory swiftlint lint --strict --config .swiftlint.yml
+
+      - name: Tests
+        run: swift test
