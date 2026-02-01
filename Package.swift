@@ -6,7 +6,7 @@ let package = Package(
     name: "PQContainerKit",
     platforms: [
         .iOS(.v26),
-        .macOS(.v12)
+        .macOS(.v26)
     ],
     products: [
         .library(name: "PQContainerKit", targets: ["PQContainerKit"])
