@@ -8,7 +8,6 @@
 import CryptoKit
 import Foundation
 
-@available(iOS 26.0, macOS 26.0, *)
 enum CryptoKitMLKEM768Adapter {
     static func generatePrivateKey() throws -> MLKEM768.PrivateKey {
         try MLKEM768.PrivateKey()

@@ -13,7 +13,6 @@ public extension PQContainerKit {
     ///
     /// This namespace intentionally wraps CryptoKit types to keep the public API stable and
     /// to allow swapping the backend in the future.
-    @available(iOS 26.0, macOS 26.0, *)
     enum MLKEM768 {
         /// A ML-KEM-768 public key.
         ///
