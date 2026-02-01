@@ -9,15 +9,15 @@ import CryptoKit
 import Foundation
 
 enum CryptoKitMLKEM768Adapter {
-    static func generatePrivateKey() throws -> MLKEM768.PrivateKey {
-        try MLKEM768.PrivateKey()
+    static func generatePrivateKey() throws -> CryptoKit.MLKEM768.PrivateKey {
+        try CryptoKit.MLKEM768.PrivateKey()
     }
 
-    static func publicKeyRaw(from privateKey: MLKEM768.PrivateKey) -> Data {
+    static func publicKeyRaw(from privateKey: CryptoKit.MLKEM768.PrivateKey) -> Data {
         privateKey.publicKey.rawRepresentation
     }
 
-    static func makePublicKey(fromRaw raw: Data) throws -> MLKEM768.PublicKey {
-        try MLKEM768.PublicKey(rawRepresentation: raw)
+    static func makePublicKey(fromRaw raw: Data) throws -> CryptoKit.MLKEM768.PublicKey {
+        try CryptoKit.MLKEM768.PublicKey(rawRepresentation: raw)
     }
 }
