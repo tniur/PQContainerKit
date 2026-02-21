@@ -31,4 +31,13 @@ public enum ContainerKitError: Swift.Error, Equatable, Sendable {
 
     /// Invalid requested output length for KDF.
     case invalidKDFOutputLength
+
+    /// AES-GCM nonce length is invalid (must be 12 bytes).
+    case invalidNonceLength
+
+    /// AES-GCM tag length is invalid (must be 16 bytes).
+    case invalidTagLength
+
+    /// AEAD operation failed (authentication failure or other cryptographic error).
+    case aeadFailed
 }
