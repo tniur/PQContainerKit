@@ -16,4 +16,6 @@
 --semicolons never
 --trimwhitespace always
 
+--disable redundantInternal
+
 --exclude .build,.swiftpm,DerivedData,Package.resolved

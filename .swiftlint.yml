@@ -16,6 +16,7 @@ check_for_updates: false
 
 disabled_rules:
   - todo
+  - trailing_whitespace
 
 opt_in_rules:
   - force_unwrapping
