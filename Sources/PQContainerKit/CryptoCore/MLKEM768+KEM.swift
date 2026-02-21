@@ -12,11 +12,12 @@ extension MLKEM768 {
     static func encapsulate(to recipientPublicKey: PublicKey) throws -> KEMResult {
         do {
             let pk = try recipientPublicKey.cryptoKitKey()
-            let result = try pk.encapsulate()
-            let ct = try Ciphertext(rawRepresentation: result.encapsulated)
-            return KEMResult(sharedSecret: result.sharedSecret, ciphertext: ct)
-        } catch let containerKitError as ContainerKitError {
-            throw containerKitError
+            let (ss, ctRaw) = try CryptoKitMLKEM768Adapter.encapsulate(to: pk)
+
+            let ct = try Ciphertext(rawRepresentation: ctRaw)
+            return KEMResult(sharedSecret: ss, ciphertext: ct)
+        } catch let сontainerKitError as ContainerKitError {
+            throw сontainerKitError
         } catch {
             throw ContainerKitError.kemEncapsulationFailed
         }
@@ -24,7 +25,10 @@ extension MLKEM768 {
 
     static func decapsulate(privateKey: PrivateKey, ciphertext: Ciphertext) throws -> SymmetricKey {
         do {
-            return try privateKey.cryptoKitKey.decapsulate(ciphertext.rawRepresentation)
+            return try CryptoKitMLKEM768Adapter.decapsulate(
+                using: privateKey.cryptoKitKey,
+                encapsulated: ciphertext.rawRepresentation
+            )
         } catch {
             throw ContainerKitError.kemDecapsulationFailed
         }
