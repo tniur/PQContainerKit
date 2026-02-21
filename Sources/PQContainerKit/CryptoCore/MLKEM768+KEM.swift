@@ -16,8 +16,8 @@ internal extension MLKEM768 {
 
             let ct = try Ciphertext(rawRepresentation: ctRaw)
             return KEMResult(sharedSecret: ss, ciphertext: ct)
-        } catch let сontainerKitError as ContainerKitError {
-            throw сontainerKitError
+        } catch let containerKitError as ContainerKitError {
+            throw containerKitError
         } catch {
             throw ContainerKitError.kemEncapsulationFailed
         }
