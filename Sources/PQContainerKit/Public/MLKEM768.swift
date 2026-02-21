@@ -25,25 +25,25 @@ public enum MLKEM768 {
         /// Use this initializer when importing a key from QR/text.
         ///
         /// - Parameter rawRepresentation: Raw bytes received from an external source.
-        /// - Throws: `Error.invalidKeyRepresentation`
+        /// - Throws: `ContainerKitError.invalidKeyRepresentation`
         ///           if the bytes are not a valid ML-KEM-768 public key.
         public init(rawRepresentation: Data) throws {
             do {
                 _ = try CryptoKitMLKEM768Adapter.makePublicKey(fromRaw: rawRepresentation)
                 self.rawRepresentation = rawRepresentation
             } catch {
-                throw Error.invalidKeyRepresentation
+                throw ContainerKitError.invalidKeyRepresentation
             }
         }
 
         /// Creates a public key from a Base64-encoded string.
         ///
         /// - Parameter base64: Base64 string representation of the public key.
-        /// - Throws: `Error.invalidBase64` if Base64 decoding fails,
-        ///           or `Error.invalidKeyRepresentation` if decoded bytes are not a valid key.
+        /// - Throws: `ContainerKitError.invalidBase64` if Base64 decoding fails,
+        ///           or `ContainerKitError.invalidKeyRepresentation` if decoded bytes are not a valid key.
         public init(base64: String) throws {
             guard let data = Data(base64Encoded: base64) else {
-                throw Error.invalidBase64
+                throw ContainerKitError.invalidBase64
             }
             try self.init(rawRepresentation: data)
         }
@@ -102,7 +102,56 @@ public enum MLKEM768 {
             let privateKey = PrivateKey(sk)
             return KeyPair(publicKey: privateKey.publicKey, privateKey: privateKey)
         } catch {
-            throw Error.keyGenerationFailed
+            throw ContainerKitError.keyGenerationFailed
         }
+    }
+}
+
+// MARK: - KEM Ciphertext
+
+public extension MLKEM768 {
+    /// A validated ML-KEM-768 ciphertext.
+    ///
+    /// The ciphertext has a fixed size for ML-KEM-768.
+    struct Ciphertext: Hashable, Sendable {
+        /// Fixed ciphertext size (bytes) for ML-KEM-768.
+        public static let byteCount = 1088
+
+        /// Raw ciphertext bytes.
+        public let rawRepresentation: Data
+
+        /// Creates a ciphertext from raw bytes.
+        ///
+        /// - Throws: `ContainerKitError.invalidCiphertextRepresentation`
+        ///   if the byte count doesn't match ML-KEM-768 ciphertext size.
+        public init(rawRepresentation: Data) throws {
+            guard rawRepresentation.count == Self.byteCount else {
+                throw ContainerKitError.invalidCiphertextRepresentation
+            }
+            self.rawRepresentation = rawRepresentation
+        }
+    }
+}
+
+// MARK: - Internal CryptoKit bridges
+
+extension MLKEM768.PublicKey {
+    /// Returns the underlying CryptoKit public key.
+    ///
+    /// This should never fail for instances created through the public initializers
+    /// (they validate the raw bytes). If it fails, treat it as invalid representation.
+    func cryptoKitKey() throws -> CryptoKit.MLKEM768.PublicKey {
+        do {
+            return try CryptoKitMLKEM768Adapter.makePublicKey(fromRaw: rawRepresentation)
+        } catch {
+            throw ContainerKitError.invalidKeyRepresentation
+        }
+    }
+}
+
+extension MLKEM768.PrivateKey {
+    /// Returns the underlying CryptoKit private key.
+    var cryptoKitKey: CryptoKit.MLKEM768.PrivateKey {
+        cryptoKitPrivateKey
     }
 }
