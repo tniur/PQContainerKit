@@ -15,4 +15,10 @@ public enum Error: Swift.Error, Equatable, Sendable {
     case invalidKeyRepresentation
     /// Key generation failed (platform API error).
     case keyGenerationFailed
+    /// KEM encapsulation failed (platform cryptography error).
+    case kemEncapsulationFailed
+    /// KEM decapsulation failed (platform cryptography error).
+    case kemDecapsulationFailed
+    /// The provided ciphertext bytes are not a valid representation for ML-KEM ciphertext.
+    case invalidCiphertextRepresentation
 }
