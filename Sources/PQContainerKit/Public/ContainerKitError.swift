@@ -26,4 +26,9 @@ public enum ContainerKitError: Swift.Error, Equatable, Sendable {
     case kemDecapsulationFailed
     /// The provided ciphertext bytes are not a valid representation for ML-KEM ciphertext.
     case invalidCiphertextRepresentation
+
+    // MARK: - KDF / AEAD (CryptoCore)
+
+    /// Invalid requested output length for KDF.
+    case invalidKDFOutputLength
 }
