@@ -8,7 +8,7 @@
 /// Public error type for PQContainerKit.
 ///
 /// Errors are coarse-grained by design and do not expose low-level cryptographic failure details.
-public enum ContainerKitError: Swift.Error, Equatable, Sendable {
+public enum ContainerKitError: Error, Equatable, Sendable {
     // MARK: - Key import/export
 
     /// The provided Base64 string is not valid Base64.
@@ -26,4 +26,17 @@ public enum ContainerKitError: Swift.Error, Equatable, Sendable {
     case kemDecapsulationFailed
     /// The provided ciphertext bytes are not a valid representation for ML-KEM ciphertext.
     case invalidCiphertextRepresentation
+
+    // MARK: - KDF / AEAD
+
+    /// Invalid requested output length for KDF.
+    case invalidKDFOutputLength
+    /// AES-GCM nonce length is invalid (must be 12 bytes).
+    case invalidNonceLength
+    /// AES-GCM tag length is invalid (must be 16 bytes).
+    case invalidTagLength
+    /// AEAD operation failed (authentication failure or other cryptographic error).
+    case aeadFailed
+    /// wrappedDEK has an invalid representation (length/format mismatch).
+    case invalidWrappedDEKRepresentation
 }
