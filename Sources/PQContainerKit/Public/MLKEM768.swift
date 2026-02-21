@@ -32,7 +32,7 @@ public enum MLKEM768 {
                 _ = try CryptoKitMLKEM768Adapter.makePublicKey(fromRaw: rawRepresentation)
                 self.rawRepresentation = rawRepresentation
             } catch {
-                throw Error.invalidKeyRepresentation
+                throw ContainerKitError.invalidKeyRepresentation
             }
         }
 
@@ -43,7 +43,7 @@ public enum MLKEM768 {
         ///           or `Error.invalidKeyRepresentation` if decoded bytes are not a valid key.
         public init(base64: String) throws {
             guard let data = Data(base64Encoded: base64) else {
-                throw Error.invalidBase64
+                throw ContainerKitError.invalidBase64
             }
             try self.init(rawRepresentation: data)
         }
@@ -102,7 +102,7 @@ public enum MLKEM768 {
             let privateKey = PrivateKey(sk)
             return KeyPair(publicKey: privateKey.publicKey, privateKey: privateKey)
         } catch {
-            throw Error.keyGenerationFailed
+            throw ContainerKitError.keyGenerationFailed
         }
     }
 }
