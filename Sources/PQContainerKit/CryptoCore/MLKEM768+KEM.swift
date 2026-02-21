@@ -13,8 +13,8 @@ internal extension MLKEM768 {
         do {
             let pk = try recipientPublicKey.cryptoKitKey()
             let (ss, ctRaw) = try CryptoKitMLKEM768Adapter.encapsulate(to: pk)
-
             let ct = try Ciphertext(rawRepresentation: ctRaw)
+
             return KEMResult(sharedSecret: ss, ciphertext: ct)
         } catch let containerKitError as ContainerKitError {
             throw containerKitError

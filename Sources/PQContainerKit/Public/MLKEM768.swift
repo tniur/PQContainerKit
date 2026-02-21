@@ -100,6 +100,7 @@ public enum MLKEM768 {
         do {
             let sk = try CryptoKitMLKEM768Adapter.generatePrivateKey()
             let privateKey = PrivateKey(sk)
+
             return KeyPair(publicKey: privateKey.publicKey, privateKey: privateKey)
         } catch {
             throw ContainerKitError.keyGenerationFailed
