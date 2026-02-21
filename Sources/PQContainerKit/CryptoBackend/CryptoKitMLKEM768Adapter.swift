@@ -8,7 +8,7 @@
 import CryptoKit
 import Foundation
 
-enum CryptoKitMLKEM768Adapter {
+internal enum CryptoKitMLKEM768Adapter {
     // MARK: - Keys
 
     static func generatePrivateKey() throws -> CryptoKit.MLKEM768.PrivateKey {

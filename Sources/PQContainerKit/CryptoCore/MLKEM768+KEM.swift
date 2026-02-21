@@ -8,7 +8,7 @@
 import CryptoKit
 import Foundation
 
-extension MLKEM768 {
+internal extension MLKEM768 {
     static func encapsulate(to recipientPublicKey: PublicKey) throws -> KEMResult {
         do {
             let pk = try recipientPublicKey.cryptoKitKey()

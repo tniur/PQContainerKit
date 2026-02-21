@@ -135,7 +135,7 @@ public extension MLKEM768 {
 
 // MARK: - Internal CryptoKit bridges
 
-extension MLKEM768.PublicKey {
+internal extension MLKEM768.PublicKey {
     /// Returns the underlying CryptoKit public key.
     ///
     /// This should never fail for instances created through the public initializers
@@ -149,7 +149,7 @@ extension MLKEM768.PublicKey {
     }
 }
 
-extension MLKEM768.PrivateKey {
+internal extension MLKEM768.PrivateKey {
     /// Returns the underlying CryptoKit private key.
     var cryptoKitKey: CryptoKit.MLKEM768.PrivateKey {
         cryptoKitPrivateKey
