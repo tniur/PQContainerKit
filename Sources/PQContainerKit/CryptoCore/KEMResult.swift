@@ -7,7 +7,7 @@
 
 import CryptoKit
 
-struct KEMResult: Sendable {
+internal struct KEMResult: Sendable {
     let sharedSecret: SymmetricKey
     let ciphertext: MLKEM768.Ciphertext
 }
