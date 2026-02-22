@@ -13,7 +13,8 @@ import Foundation
 internal enum ContainerV1Constants {
     // MARK: - Magic / Version
 
-    static let magic: Data = .init([0x50, 0x51, 0x43, 0x4B]) // "PQCK"
+    /// Magic bytes for v1 containers: ASCII `"PQCK"` (`0x50 0x51 0x43 0x4B`).
+    static let magic: Data = .init([0x50, 0x51, 0x43, 0x4B])
     static let version: UInt16 = 1
 
     // MARK: - Header
