@@ -9,15 +9,15 @@ import Foundation
 @testable import PQContainerKit
 import Testing
 
-@Suite("MLKEM768 keys")
+@Suite("Keys: ML-KEM-768")
 struct MLKEM768KeysTests {
-    @Test("KeyPair generation returns non-empty public key bytes")
+    @Test("GenerateKeyPair produces non-empty public key representation")
     func keyPairGeneration() throws {
         let pair = try MLKEM768.generateKeyPair()
         #expect(!pair.publicKey.rawRepresentation.isEmpty)
     }
 
-    @Test("PublicKey Base64 round-trip")
+    @Test("Public key Base64 export/import round-trip")
     func publicKeyBase64RoundTrip() throws {
         let pair = try MLKEM768.generateKeyPair()
         let exported = pair.publicKey.base64
@@ -27,14 +27,14 @@ struct MLKEM768KeysTests {
         #expect(imported.fingerprint == pair.publicKey.fingerprint)
     }
 
-    @Test("Invalid Base64 throws")
+    @Test("Public key init(base64:) rejects invalid Base64")
     func invalidBase64Throws() {
         #expect(throws: PQContainerKit.ContainerKitError.invalidBase64) {
             _ = try MLKEM768.PublicKey(base64: "not base64!!!")
         }
     }
 
-    @Test("Valid Base64 but invalid key bytes throws invalidKeyRepresentation")
+    @Test("Public key init(base64:) rejects invalid key bytes")
     func validBase64ButInvalidKeyBytes() {
         do {
             _ = try MLKEM768.PublicKey(base64: "AA==")

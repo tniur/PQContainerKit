@@ -10,9 +10,9 @@ import Foundation
 @testable import PQContainerKit
 import Testing
 
-@Suite("AES-GCM")
+@Suite("CryptoCore: AES-GCM")
 struct AESGCMTests {
-    @Test("UT-01: AES-GCM round-trip")
+    @Test("Seal/open round-trip returns original plaintext")
     func aesGcmRoundTripUT01() throws {
         let key = SymmetricKey(size: .bits256)
         let nonce = Data((0 ..< AESGCM.nonceByteCount).map { UInt8($0) })
@@ -29,7 +29,7 @@ struct AESGCMTests {
         #expect(opened == plaintext)
     }
 
-    @Test("UT-02: Tampering ciphertext rejects (aeadFailed)")
+    @Test("Open rejects tampered ciphertext")
     func aesGcmTamperCiphertextUT02() throws {
         let key = SymmetricKey(size: .bits256)
         let nonce = Data((0 ..< AESGCM.nonceByteCount).map { UInt8($0) })
@@ -53,7 +53,7 @@ struct AESGCMTests {
         }
     }
 
-    @Test("UT-02: Tampering tag rejects (aeadFailed)")
+    @Test("Open rejects tampered authentication tag")
     func aesGcmTamperTagUT02() throws {
         let key = SymmetricKey(size: .bits256)
         let nonce = Data((0 ..< AESGCM.nonceByteCount).map { UInt8($0) })
@@ -77,7 +77,7 @@ struct AESGCMTests {
         }
     }
 
-    @Test("UT-03: Wrong key rejects (aeadFailed)")
+    @Test("Open rejects with wrong key")
     func aesGcmWrongKeyUT03() throws {
         let keyA = SymmetricKey(size: .bits256)
         let keyB = SymmetricKey(size: .bits256)
@@ -96,7 +96,7 @@ struct AESGCMTests {
         }
     }
 
-    @Test("Nonce validation rejects invalid nonce length")
+    @Test("Seal rejects nonce with invalid length")
     func nonceValidation() throws {
         let key = SymmetricKey(size: .bits256)
         let badNonce = Data(repeating: 0x00, count: 1)
@@ -107,7 +107,7 @@ struct AESGCMTests {
         }
     }
 
-    @Test("Tag validation rejects invalid tag length")
+    @Test("Open rejects tag with invalid length")
     func tagValidation() throws {
         let key = SymmetricKey(size: .bits256)
         let nonce = Data((0 ..< AESGCM.nonceByteCount).map { UInt8($0) })
