@@ -7,6 +7,8 @@
 
 internal struct DecodedContainerV1: Sendable {
     internal let header: ContainerHeader
+
     internal let recipients: [RecipientEntry]
+
     internal let cipherParts: CipherParts
 }

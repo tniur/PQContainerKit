@@ -97,10 +97,10 @@ internal enum ContainerV1Validator {
         for _ in 0 ..< count {
             try reader.skip(count: ContainerV1Constants.recipientKeyIdByteCount)
 
-            let kemLen = try readLimitedUInt16(using: &reader, max: ContainerV1Constants.maxKEMCiphertextSize)
+            let kemLen = try readNonZeroLimitedUInt16(using: &reader, max: ContainerV1Constants.maxKEMCiphertextSize)
             try reader.skip(count: kemLen)
 
-            let wrappedLen = try readLimitedUInt16(using: &reader, max: ContainerV1Constants.maxWrappedDEKSize)
+            let wrappedLen = try readNonZeroLimitedUInt16(using: &reader, max: ContainerV1Constants.maxWrappedDEKSize)
             try reader.skip(count: wrappedLen)
         }
     }
@@ -117,19 +117,27 @@ internal enum ContainerV1Validator {
         try reader.skip(count: ContainerV1Constants.authTagByteCount)
     }
 
-    private static func readLimitedUInt16(using reader: inout BinaryReader, max: Int) throws -> Int {
+    private static func readNonZeroLimitedUInt16(using reader: inout BinaryReader, max: Int) throws -> Int {
         let value = try Int(reader.readUInt16LE())
-        guard value >= 1, value <= max else {
-            throw value > max ? ContainerError.limitsExceeded : ContainerError.invalidFormat
+
+        if value == 0 {
+            throw ContainerError.invalidFormat
         }
+
+        if value > max {
+            throw ContainerError.limitsExceeded
+        }
+
         return value
     }
 
     private static func readLimitedUInt64(using reader: inout BinaryReader, max: UInt64) throws -> UInt64 {
         let value = try reader.readUInt64LE()
+
         guard value <= max else {
             throw ContainerError.limitsExceeded
         }
+
         return value
     }
 }
