@@ -8,20 +8,26 @@
 import Foundation
 
 internal enum ContainerV1Constants {
+    // MARK: - Magic / Version
+
     static let magic: Data = .init([0x50, 0x51, 0x43, 0x4B])
     static let version: UInt16 = 1
 
-    static let headerFixedByteCount = 40
-    static let maxHeaderSize = 4096
+    // MARK: - Header
 
-    static let recipientKeyIdByteCount = 32
-    static let maxRecipients = 100
+    static let headerFixedByteCount: Int = 2 + ContainerID.byteCount + 2 + 4 + ContainerHeader.reservedByteCount
+    static let maxHeaderSize: Int = 4096
 
-    static let maxKEMCiphertextSize = 2048
-    static let maxWrappedDEKSize = 128
+    // MARK: - Recipients
 
-    static let ivByteCount = 12
-    static let authTagByteCount = 16
+    static let recipientKeyIdByteCount: Int = Fingerprint.byteCount
+    static let maxRecipients: Int = 100
+    static let maxKEMCiphertextSize: Int = 2048
+    static let maxWrappedDEKSize: Int = 128
 
+    // MARK: - Cipher parts
+
+    static let ivByteCount: Int = AESGCM.nonceByteCount
+    static let authTagByteCount: Int = AESGCM.tagByteCount
     static let maxCiphertextSize: UInt64 = 512 * 1024 * 1024
 }
