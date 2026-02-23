@@ -9,7 +9,19 @@ import CryptoKit
 import Foundation
 
 public struct Fingerprint: Hashable, Sendable {
+    public var hexStringGrouped: String {
+        let hex = rawValue.map { String(format: "%02x", $0) }.joined()
+
+        return stride(from: 0, to: hex.count, by: 8).map { idx in
+            let start = hex.index(hex.startIndex, offsetBy: idx)
+            let end = hex.index(start, offsetBy: min(8, hex.count - idx))
+
+            return String(hex[start ..< end])
+        }.joined(separator: " ")
+    }
+
     public static let byteCount = 32
+
     public let rawValue: Data
 
     public init?(rawValue: Data) {
@@ -19,15 +31,6 @@ public struct Fingerprint: Hashable, Sendable {
 
     init(sha256Digest: SHA256.Digest) {
         rawValue = Data(sha256Digest)
-    }
-
-    public var hexStringGrouped: String {
-        let hex = rawValue.map { String(format: "%02x", $0) }.joined()
-        return stride(from: 0, to: hex.count, by: 8).map { idx in
-            let start = hex.index(hex.startIndex, offsetBy: idx)
-            let end = hex.index(start, offsetBy: min(8, hex.count - idx))
-            return String(hex[start ..< end])
-        }.joined(separator: " ")
     }
 }
 

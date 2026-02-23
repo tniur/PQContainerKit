@@ -9,28 +9,26 @@ public enum ContainerKitError: Error, Equatable, Sendable {
     // MARK: - Key
 
     case invalidBase64
-
     case invalidKeyRepresentation
-
     case keyGenerationFailed
 
     // MARK: - ML-KEM
 
     case kemEncapsulationFailed
-
     case kemDecapsulationFailed
-
     case invalidCiphertextRepresentation
 
-    // MARK: - KDF / AEAD
+    // MARK: - KDF
 
     case invalidKDFOutputLength
 
+    // MARK: - AEAD
+
     case invalidNonceLength
-
     case invalidTagLength
-
     case aeadFailed
+
+    // MARK: - DEK Wrap
 
     case invalidWrappedDEKRepresentation
 }

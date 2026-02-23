@@ -10,7 +10,16 @@ import Foundation
 
 public enum MLKEM768 {
     public struct PublicKey: Hashable, Sendable {
+        public var base64: String {
+            rawRepresentation.base64EncodedString()
+        }
+
+        public var fingerprint: Fingerprint {
+            Fingerprint.fromPublicKeyRaw(rawRepresentation)
+        }
+
         public let rawRepresentation: Data
+
         public init(rawRepresentation: Data) throws {
             do {
                 _ = try CryptoKitMLKEM768Adapter.makePublicKey(fromRaw: rawRepresentation)
@@ -24,15 +33,8 @@ public enum MLKEM768 {
             guard let data = Data(base64Encoded: base64) else {
                 throw ContainerKitError.invalidBase64
             }
+
             try self.init(rawRepresentation: data)
-        }
-
-        public var base64: String {
-            rawRepresentation.base64EncodedString()
-        }
-
-        public var fingerprint: Fingerprint {
-            Fingerprint.fromPublicKeyRaw(rawRepresentation)
         }
 
         init(uncheckedRawRepresentation: Data) {
@@ -41,21 +43,20 @@ public enum MLKEM768 {
     }
 
     public struct PrivateKey: Sendable {
+        public var publicKey: PublicKey {
+            let raw = CryptoKitMLKEM768Adapter.publicKeyRaw(from: cryptoKitPrivateKey)
+            return PublicKey(uncheckedRawRepresentation: raw)
+        }
+
         fileprivate let cryptoKitPrivateKey: CryptoKit.MLKEM768.PrivateKey
 
         fileprivate init(_ pk: CryptoKit.MLKEM768.PrivateKey) {
             cryptoKitPrivateKey = pk
         }
-
-        public var publicKey: PublicKey {
-            let raw = CryptoKitMLKEM768Adapter.publicKeyRaw(from: cryptoKitPrivateKey)
-            return PublicKey(uncheckedRawRepresentation: raw)
-        }
     }
 
     public struct KeyPair: Sendable {
         public let publicKey: PublicKey
-
         public let privateKey: PrivateKey
     }
 
@@ -71,8 +72,6 @@ public enum MLKEM768 {
     }
 }
 
-// MARK: - KEM Ciphertext
-
 public extension MLKEM768 {
     struct Ciphertext: Hashable, Sendable {
         public static let byteCount = 1088
@@ -83,6 +82,7 @@ public extension MLKEM768 {
             guard rawRepresentation.count == Self.byteCount else {
                 throw ContainerKitError.invalidCiphertextRepresentation
             }
+
             self.rawRepresentation = rawRepresentation
         }
     }
