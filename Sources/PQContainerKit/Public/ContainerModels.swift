@@ -18,7 +18,9 @@ public struct ContainerID: Hashable, Sendable {
     }
 
     public init?(rawValue: Data) {
-        guard rawValue.count == Self.byteCount else { return nil }
+        guard rawValue.count == Self.byteCount else {
+            return nil
+        }
 
         var raw: uuid_t = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         withUnsafeMutableBytes(of: &raw) { dst in
@@ -97,8 +99,13 @@ public struct CipherParts: Hashable, Sendable {
     public let authTag: Data
 
     public init(iv: Data, ciphertext: Data, authTag: Data) throws {
-        guard iv.count == Self.ivByteCount else { throw ContainerError.invalidFormat }
-        guard authTag.count == Self.authTagByteCount else { throw ContainerError.invalidFormat }
+        guard iv.count == Self.ivByteCount else {
+            throw ContainerError.invalidFormat
+        }
+
+        guard authTag.count == Self.authTagByteCount else {
+            throw ContainerError.invalidFormat
+        }
 
         self.iv = iv
         self.ciphertext = ciphertext

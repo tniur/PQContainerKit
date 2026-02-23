@@ -11,6 +11,6 @@ public enum ContainerError: Error, Equatable, Sendable {
     case unsupportedVersion
     case invalidFormat
     case limitsExceeded
-    case accessDenied
     case cannotOpen
+    case accessDenied
 }
