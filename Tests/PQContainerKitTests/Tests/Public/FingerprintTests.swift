@@ -11,7 +11,7 @@ import Testing
 
 @Suite("Fingerprint")
 struct FingerprintTests {
-    @Test("Fingerprint is 32 bytes and stable")
+    @Test("Fingerprint is 32 bytes and deterministic for a key")
     func fingerprintBasics() throws {
         let pair = try MLKEM768.generateKeyPair()
         let fp1 = pair.publicKey.fingerprint
@@ -21,14 +21,17 @@ struct FingerprintTests {
         #expect(fp1 == fp2)
     }
 
-    @Test("Fingerprint consistent across export/import")
+    @Test("Fingerprint preserved across raw export/import")
     func fingerprintConsistentAcrossImport() throws {
         let pair = try MLKEM768.generateKeyPair()
-        let imported = try MLKEM768.PublicKey(rawRepresentation: pair.publicKey.rawRepresentation)
+        let imported = try MLKEM768.PublicKey(
+            rawRepresentation: pair.publicKey.rawRepresentation
+        )
+
         #expect(imported.fingerprint == pair.publicKey.fingerprint)
     }
 
-    @Test("Fingerprint raw initializer enforces 32 bytes")
+    @Test("RawValue initializer enforces 32-byte length")
     func fingerprintRawInitializer() {
         #expect(Fingerprint(rawValue: Data(repeating: 0, count: 31)) == nil)
         #expect(Fingerprint(rawValue: Data(repeating: 0, count: 32)) != nil)

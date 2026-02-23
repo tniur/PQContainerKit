@@ -10,13 +10,9 @@ import Foundation
 @testable import PQContainerKit
 import Testing
 
-@Suite("DEK wrap/unwrap")
+@Suite("CryptoCore: DEK wrap")
 struct DEKWrapTests {
-    private func bytes(of key: SymmetricKey) -> Data {
-        key.withUnsafeBytes { Data($0) }
-    }
-
-    @Test("DEKWrap round-trip unwraps to the same DEK")
+    @Test("Wrap/unwrap returns original DEK")
     func dekWrapRoundTrip() throws {
         let dek = SymmetricKey(size: .bits256)
         let sharedSecret = SymmetricKey(data: Data(repeating: 0x42, count: 32))
@@ -38,10 +34,10 @@ struct DEKWrapTests {
             sharedSecret: sharedSecret
         )
 
-        #expect(bytes(of: unwrapped) == bytes(of: dek))
+        #expect(TestByteUtils.data(of: unwrapped) == TestByteUtils.data(of: dek))
     }
 
-    @Test("Wrong shared secret rejects unwrap (aeadFailed)")
+    @Test("Unwrap rejects with wrong shared secret")
     func dekWrapWrongSharedSecret() throws {
         let dek = SymmetricKey(size: .bits256)
         let sharedSecretA = SymmetricKey(data: Data(repeating: 0x11, count: 32))
@@ -67,7 +63,7 @@ struct DEKWrapTests {
         }
     }
 
-    @Test("Tampering wrappedDEK rejects unwrap (aeadFailed)")
+    @Test("Unwrap rejects tampered wrappedDEK")
     func dekWrapTampering() throws {
         let dek = SymmetricKey(size: .bits256)
         let sharedSecret = SymmetricKey(data: Data(repeating: 0x33, count: 32))

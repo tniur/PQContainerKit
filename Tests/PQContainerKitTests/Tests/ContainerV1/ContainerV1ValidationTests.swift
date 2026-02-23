@@ -9,9 +9,9 @@ import Foundation
 @testable import PQContainerKit
 import Testing
 
-@Suite("Container v1 validation")
+@Suite("Container v1: validation")
 struct ContainerV1ValidationTests {
-    @Test("Format Validation (Invalid Version)")
+    @Test("Rejects unsupported container version")
     func invalidVersionUT07() {
         var data = Data()
         data.append(Data("PQCK".utf8))
@@ -22,7 +22,7 @@ struct ContainerV1ValidationTests {
         }
     }
 
-    @Test("Format Validation (Limits) recipientsCount too large")
+    @Test("Rejects recipientsCount above allowed limit")
     func limitsExceededUT08() {
         let headerBytes = makeHeader(recipientsCount: 10000)
 
@@ -47,11 +47,5 @@ struct ContainerV1ValidationTests {
         writer.append(Data(repeating: 0x00, count: ContainerHeader.reservedByteCount))
 
         return writer.data
-    }
-}
-
-private extension FixedWidthInteger {
-    var littleEndianBytes: [UInt8] {
-        withUnsafeBytes(of: littleEndian) { Array($0) }
     }
 }
