@@ -8,18 +8,7 @@
 import CryptoKit
 import Foundation
 
-/// Internal HKDF-SHA256 helper for key derivation in CryptoCore.
-///
-/// Uses HKDF for key separation via `info` and binding to context via `salt`.
 internal enum HKDFSHA256 {
-    /// Derives a symmetric key using HKDF-SHA256.
-    ///
-    /// - Parameters:
-    ///   - sharedSecret: Input key material (IKM), typically ML-KEM shared secret.
-    ///   - salt: Context-binding salt (e.g., containerID || recipientKeyId).
-    ///   - info: Purpose string / domain separation (e.g., "DEK_WRAP_KEY").
-    ///   - length: Output key length in bytes.
-    /// - Returns: Derived `SymmetricKey` of requested length.
     static func deriveKey(
         sharedSecret: SymmetricKey,
         salt: Data,
@@ -38,9 +27,6 @@ internal enum HKDFSHA256 {
         )
     }
 
-    /// Derives raw bytes using HKDF-SHA256.
-    ///
-    /// Useful for non-key material like deterministic nonces.
     static func deriveBytes(
         sharedSecret: SymmetricKey,
         salt: Data,

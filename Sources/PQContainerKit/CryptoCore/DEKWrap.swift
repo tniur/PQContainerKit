@@ -8,17 +8,6 @@
 import CryptoKit
 import Foundation
 
-/// Internal DEK wrapping/unwrapping using KEM-derived shared secret.
-///
-/// wrappedDEK format (v1, fixed for MVP):
-/// - `wrappedDEK = ciphertext || tag`
-///
-/// Key and nonce are derived via HKDF-SHA256 from the ML-KEM shared secret:
-/// - wrapKey:   HKDF(ss, salt=containerID||recipientKeyId, info="DEK_WRAP_KEY",   L=32)
-/// - wrapNonce: HKDF(ss, salt=containerID||recipientKeyId, info="DEK_WRAP_NONCE", L=12)
-///
-/// AAD binds the wrap to the container and recipient:
-/// - aad = containerID || recipientKeyId
 internal enum DEKWrap {
     private static let dekByteCount = 32
 

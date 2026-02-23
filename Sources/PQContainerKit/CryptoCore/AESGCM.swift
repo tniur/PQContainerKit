@@ -8,9 +8,6 @@
 import CryptoKit
 import Foundation
 
-/// Internal AES-256-GCM helper for sealing/opening payloads in CryptoCore.
-///
-/// Designed to work with container v1 layout where nonce/ciphertext/tag are stored separately.
 internal enum AESGCM {
     static let nonceByteCount = 12
     static let tagByteCount = 16
