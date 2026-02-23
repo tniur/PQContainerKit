@@ -9,12 +9,7 @@ import CryptoKit
 import Foundation
 
 internal enum HKDFSHA256 {
-    static func deriveKey(
-        sharedSecret: SymmetricKey,
-        salt: Data,
-        info: Data,
-        length: Int
-    ) throws -> SymmetricKey {
+    static func deriveKey(sharedSecret: SymmetricKey, salt: Data, info: Data, length: Int) throws -> SymmetricKey {
         guard (1 ... 1024).contains(length) else {
             throw ContainerKitError.invalidKDFOutputLength
         }
@@ -27,13 +22,14 @@ internal enum HKDFSHA256 {
         )
     }
 
-    static func deriveBytes(
-        sharedSecret: SymmetricKey,
-        salt: Data,
-        info: Data,
-        length: Int
-    ) throws -> Data {
-        let key = try deriveKey(sharedSecret: sharedSecret, salt: salt, info: info, length: length)
+    static func deriveBytes(sharedSecret: SymmetricKey, salt: Data, info: Data, length: Int) throws -> Data {
+        let key = try deriveKey(
+            sharedSecret: sharedSecret,
+            salt: salt,
+            info: info,
+            length: length
+        )
+
         return key.withUnsafeBytes { Data($0) }
     }
 }

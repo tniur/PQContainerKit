@@ -38,7 +38,9 @@ internal enum DEKWrap {
 
         var dekBytes = dek.withUnsafeBytes { Data($0) }
 
-        defer { dekBytes.resetBytes(in: 0 ..< dekBytes.count) }
+        defer {
+            dekBytes.resetBytes(in: 0 ..< dekBytes.count)
+        }
 
         let (ciphertext, tag) = try AESGCM.seal(
             dekBytes,
@@ -92,7 +94,9 @@ internal enum DEKWrap {
             authenticating: context
         )
 
-        defer { dekBytes.resetBytes(in: 0 ..< dekBytes.count) }
+        defer {
+            dekBytes.resetBytes(in: 0 ..< dekBytes.count)
+        }
 
         guard dekBytes.count == dekByteCount else {
             throw ContainerKitError.invalidWrappedDEKRepresentation
