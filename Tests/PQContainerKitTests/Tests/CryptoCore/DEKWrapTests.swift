@@ -12,10 +12,6 @@ import Testing
 
 @Suite("CryptoCore: DEK wrap")
 struct DEKWrapTests {
-    private func bytes(of key: SymmetricKey) -> Data {
-        key.withUnsafeBytes { Data($0) }
-    }
-
     @Test("Wrap/unwrap returns original DEK")
     func dekWrapRoundTrip() throws {
         let dek = SymmetricKey(size: .bits256)
@@ -38,7 +34,7 @@ struct DEKWrapTests {
             sharedSecret: sharedSecret
         )
 
-        #expect(bytes(of: unwrapped) == bytes(of: dek))
+        #expect(TestByteUtils.data(of: unwrapped) == TestByteUtils.data(of: dek))
     }
 
     @Test("Unwrap rejects with wrong shared secret")

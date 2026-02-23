@@ -49,9 +49,3 @@ struct ContainerV1ValidationTests {
         return writer.data
     }
 }
-
-private extension FixedWidthInteger {
-    var littleEndianBytes: [UInt8] {
-        withUnsafeBytes(of: littleEndian) { Array($0) }
-    }
-}

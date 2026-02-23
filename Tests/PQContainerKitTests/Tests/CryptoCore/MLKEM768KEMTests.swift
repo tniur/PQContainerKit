@@ -12,18 +12,17 @@ import Testing
 
 @Suite("CryptoCore: ML-KEM-768 (KEM)")
 struct MLKEM768KEMTests {
-    private func bytes(of key: SymmetricKey) -> Data {
-        key.withUnsafeBytes { Data($0) }
-    }
-
     @Test("Encapsulate/decapsulate yields identical shared secret")
     func kemCorrectnessUT04() throws {
         let pair = try MLKEM768.generateKeyPair()
 
         let kem = try MLKEM768.encapsulate(to: pair.publicKey)
-        let ss2 = try MLKEM768.decapsulate(privateKey: pair.privateKey, ciphertext: kem.ciphertext)
+        let ss2 = try MLKEM768.decapsulate(
+            privateKey: pair.privateKey,
+            ciphertext: kem.ciphertext
+        )
 
-        #expect(bytes(of: kem.sharedSecret) == bytes(of: ss2))
+        #expect(TestByteUtils.data(of: kem.sharedSecret) == TestByteUtils.data(of: ss2))
     }
 
     @Test("Decapsulate with different private key yields different shared secret")
@@ -32,9 +31,12 @@ struct MLKEM768KEMTests {
         let keyPair2 = try MLKEM768.generateKeyPair()
 
         let kem = try MLKEM768.encapsulate(to: keyPair1.publicKey)
-        let ssWrong = try MLKEM768.decapsulate(privateKey: keyPair2.privateKey, ciphertext: kem.ciphertext)
+        let ssWrong = try MLKEM768.decapsulate(
+            privateKey: keyPair2.privateKey,
+            ciphertext: kem.ciphertext
+        )
 
-        #expect(bytes(of: kem.sharedSecret) != bytes(of: ssWrong))
+        #expect(TestByteUtils.data(of: kem.sharedSecret) != TestByteUtils.data(of: ssWrong))
     }
 
     @Test("Ciphertext initializer rejects invalid length")

@@ -24,7 +24,10 @@ struct FingerprintTests {
     @Test("Fingerprint preserved across raw export/import")
     func fingerprintConsistentAcrossImport() throws {
         let pair = try MLKEM768.generateKeyPair()
-        let imported = try MLKEM768.PublicKey(rawRepresentation: pair.publicKey.rawRepresentation)
+        let imported = try MLKEM768.PublicKey(
+            rawRepresentation: pair.publicKey.rawRepresentation
+        )
+
         #expect(imported.fingerprint == pair.publicKey.fingerprint)
     }
 
