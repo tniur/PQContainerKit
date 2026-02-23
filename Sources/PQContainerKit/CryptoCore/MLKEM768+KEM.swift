@@ -12,6 +12,7 @@ internal extension MLKEM768 {
     static func encapsulate(to recipientPublicKey: PublicKey) throws -> KEMResult {
         do {
             let pk = try recipientPublicKey.cryptoKitKey()
+
             let (ss, ctRaw) = try CryptoKitMLKEM768Adapter.encapsulate(to: pk)
             let ct = try Ciphertext(rawRepresentation: ctRaw)
 
