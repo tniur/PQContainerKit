@@ -68,7 +68,7 @@ internal enum DEKWrap {
             throw ContainerKitError.invalidWrappedDEKRepresentation
         }
 
-        let tagStart = wrappedDEK.count - AESGCM.tagByteCount
+        let tagStart = wrappedDEK.index(wrappedDEK.endIndex, offsetBy: -AESGCM.tagByteCount)
         let ciphertext = Data(wrappedDEK[..<tagStart])
         let tag = Data(wrappedDEK[tagStart...])
 
