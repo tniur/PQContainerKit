@@ -102,6 +102,73 @@ public enum ContainerV1 {
         return unique
     }
 
+    public static func rekeyContainer(
+        containerData: Data,
+        remainingRecipients: [MLKEM768.PublicKey],
+        myPrivateKey: MLKEM768.PrivateKey,
+        myPublicKey: MLKEM768.PublicKey
+    ) throws -> Data {
+        do {
+            let decoded = try ContainerV1Decoder.decode(containerData)
+            let myKeyId = myPublicKey.fingerprint
+
+            guard let entry = decoded.recipients.first(where: { $0.recipientKeyId == myKeyId }) else {
+                throw ContainerError.accessDenied
+            }
+
+            let ct = try MLKEM768.Ciphertext(rawRepresentation: entry.kemCiphertext)
+            let ss = try MLKEM768.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
+
+            let oldDEK = try DEKWrap.unwrapDEK(
+                wrappedDEK: entry.wrappedDEK,
+                containerID: decoded.header.containerID.rawValue,
+                recipientKeyId: myKeyId.rawValue,
+                sharedSecret: ss
+            )
+
+            let plaintext = try AESGCM.open(
+                ciphertext: decoded.cipherParts.ciphertext,
+                tag: decoded.cipherParts.authTag,
+                key: oldDEK,
+                nonce: decoded.cipherParts.iv
+            )
+
+            guard UInt64(plaintext.count) <= ContainerV1Constants.maxCiphertextSize else {
+                throw ContainerError.limitsExceeded
+            }
+
+            let uniqueRecipients = makeUniqueRecipients(owner: myPublicKey, recipients: remainingRecipients)
+            guard uniqueRecipients.count <= ContainerV1Constants.maxRecipients else {
+                throw ContainerError.limitsExceeded
+            }
+
+            var dekBytes = try randomBytes(count: 32)
+            let dek = SymmetricKey(data: dekBytes)
+            dekBytes.resetBytes(in: 0 ..< dekBytes.count)
+
+            let iv = try randomBytes(count: CipherParts.ivByteCount)
+            let entries = try makeRecipientEntries(
+                recipients: uniqueRecipients,
+                dek: dek, containerID: decoded.header.containerID
+            )
+
+            let (ciphertext, tag) = try AESGCM.seal(plaintext, key: dek, nonce: iv)
+            let cipherParts = try CipherParts(iv: iv, ciphertext: ciphertext, authTag: tag)
+
+            let header = try ContainerHeader(
+                algId: decoded.header.algId,
+                containerID: decoded.header.containerID,
+                recipientsCount: UInt16(entries.count)
+            )
+
+            return try ContainerV1Encoder.encode(header: header, recipients: entries, cipherParts: cipherParts)
+        } catch let error as ContainerError {
+            throw error
+        } catch {
+            throw ContainerError.cannotOpen
+        }
+    }
+
     private static func makeRecipientEntries(
         recipients: [MLKEM768.PublicKey],
         dek: SymmetricKey,
