@@ -48,6 +48,42 @@ public enum ContainerV1 {
         }
     }
 
+    public static func openContainer(
+        containerData: Data,
+        myPrivateKey: MLKEM768.PrivateKey,
+        myPublicKey: MLKEM768.PublicKey
+    ) throws -> Data {
+        do {
+            let decoded = try ContainerV1Decoder.decode(containerData)
+            let myKeyId = myPublicKey.fingerprint
+
+            guard let entry = decoded.recipients.first(where: { $0.recipientKeyId == myKeyId }) else {
+                throw ContainerError.accessDenied
+            }
+
+            let ct = try MLKEM768.Ciphertext(rawRepresentation: entry.kemCiphertext)
+            let ss = try MLKEM768.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
+
+            let dek = try DEKWrap.unwrapDEK(
+                wrappedDEK: entry.wrappedDEK,
+                containerID: decoded.header.containerID.rawValue,
+                recipientKeyId: myKeyId.rawValue,
+                sharedSecret: ss
+            )
+
+            return try AESGCM.open(
+                ciphertext: decoded.cipherParts.ciphertext,
+                tag: decoded.cipherParts.authTag,
+                key: dek,
+                nonce: decoded.cipherParts.iv
+            )
+        } catch let error as ContainerError {
+            throw error
+        } catch {
+            throw ContainerError.cannotOpen
+        }
+    }
+
     private static func makeUniqueRecipients(
         owner: MLKEM768.PublicKey,
         recipients: [MLKEM768.PublicKey]
