@@ -46,7 +46,7 @@ public struct AlgId: RawRepresentable, Hashable, Sendable {
         self.rawValue = rawValue
     }
 
-    public static let mlkem768HkdfSha256Aes256Gcm = AlgId(rawValue: 0x0001)
+    public static let xwingHkdfSha256Aes256Gcm = AlgId(rawValue: 0x0002)
 }
 
 public struct ContainerHeader: Hashable, Sendable {

@@ -1,19 +1,19 @@
 //
-//  MLKEM768+KEM.swift
+//  XWing+KEM.swift
 //  PQContainerKit
 //
-//  Created by Pavel Bobkov on 21.02.2026.
+//  Created by Pavel Bobkov on 11.03.2026.
 //
 
 import CryptoKit
 import Foundation
 
-internal extension MLKEM768 {
+internal extension XWing {
     static func encapsulate(to recipientPublicKey: PublicKey) throws -> KEMResult {
         do {
             let pk = try recipientPublicKey.cryptoKitKey()
 
-            let (ss, ctRaw) = try CryptoKitMLKEM768Adapter.encapsulate(to: pk)
+            let (ss, ctRaw) = try CryptoKitXWingAdapter.encapsulate(to: pk)
             let ct = try Ciphertext(rawRepresentation: ctRaw)
 
             return KEMResult(sharedSecret: ss, ciphertext: ct)
@@ -26,7 +26,7 @@ internal extension MLKEM768 {
 
     static func decapsulate(privateKey: PrivateKey, ciphertext: Ciphertext) throws -> SymmetricKey {
         do {
-            return try CryptoKitMLKEM768Adapter.decapsulate(
+            return try CryptoKitXWingAdapter.decapsulate(
                 using: privateKey.cryptoKitKey,
                 encapsulated: ciphertext.rawRepresentation
             )

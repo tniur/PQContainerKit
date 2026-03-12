@@ -1,14 +1,14 @@
 //
-//  MLKEM768.swift
+//  XWing.swift
 //  PQContainerKit
 //
-//  Created by Pavel Bobkov on 01.02.2026.
+//  Created by Pavel Bobkov on 11.03.2026.
 //
 
 import CryptoKit
 import Foundation
 
-public enum MLKEM768 {
+public enum XWing {
     public struct PublicKey: Hashable, Sendable {
         public var base64: String {
             rawRepresentation.base64EncodedString()
@@ -22,7 +22,7 @@ public enum MLKEM768 {
 
         public init(rawRepresentation: Data) throws {
             do {
-                _ = try CryptoKitMLKEM768Adapter.makePublicKey(fromRaw: rawRepresentation)
+                _ = try CryptoKitXWingAdapter.makePublicKey(fromRaw: rawRepresentation)
                 self.rawRepresentation = rawRepresentation
             } catch {
                 throw ContainerKitError.invalidKeyRepresentation
@@ -44,13 +44,13 @@ public enum MLKEM768 {
 
     public struct PrivateKey: Sendable {
         public var publicKey: PublicKey {
-            let raw = CryptoKitMLKEM768Adapter.publicKeyRaw(from: cryptoKitPrivateKey)
+            let raw = CryptoKitXWingAdapter.publicKeyRaw(from: cryptoKitPrivateKey)
             return PublicKey(uncheckedRawRepresentation: raw)
         }
 
-        fileprivate let cryptoKitPrivateKey: CryptoKit.MLKEM768.PrivateKey
+        fileprivate let cryptoKitPrivateKey: CryptoKit.XWingMLKEM768X25519.PrivateKey
 
-        fileprivate init(_ pk: CryptoKit.MLKEM768.PrivateKey) {
+        fileprivate init(_ pk: CryptoKit.XWingMLKEM768X25519.PrivateKey) {
             cryptoKitPrivateKey = pk
         }
     }
@@ -62,7 +62,7 @@ public enum MLKEM768 {
 
     public static func generateKeyPair() throws -> KeyPair {
         do {
-            let sk = try CryptoKitMLKEM768Adapter.generatePrivateKey()
+            let sk = try CryptoKitXWingAdapter.generatePrivateKey()
             let privateKey = PrivateKey(sk)
 
             return KeyPair(publicKey: privateKey.publicKey, privateKey: privateKey)
@@ -72,9 +72,9 @@ public enum MLKEM768 {
     }
 }
 
-public extension MLKEM768 {
+public extension XWing {
     struct Ciphertext: Hashable, Sendable {
-        public static let byteCount = 1088
+        public static let byteCount = 1120
 
         public let rawRepresentation: Data
 
@@ -90,18 +90,18 @@ public extension MLKEM768 {
 
 // MARK: - CryptoKit bridges
 
-internal extension MLKEM768.PublicKey {
-    func cryptoKitKey() throws -> CryptoKit.MLKEM768.PublicKey {
+internal extension XWing.PublicKey {
+    func cryptoKitKey() throws -> CryptoKit.XWingMLKEM768X25519.PublicKey {
         do {
-            return try CryptoKitMLKEM768Adapter.makePublicKey(fromRaw: rawRepresentation)
+            return try CryptoKitXWingAdapter.makePublicKey(fromRaw: rawRepresentation)
         } catch {
             throw ContainerKitError.invalidKeyRepresentation
         }
     }
 }
 
-internal extension MLKEM768.PrivateKey {
-    var cryptoKitKey: CryptoKit.MLKEM768.PrivateKey {
+internal extension XWing.PrivateKey {
+    var cryptoKitKey: CryptoKit.XWingMLKEM768X25519.PrivateKey {
         cryptoKitPrivateKey
     }
 }
