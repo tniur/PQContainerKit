@@ -8,6 +8,22 @@
 import Foundation
 
 internal enum ContainerV1Validator {
+    internal static func inspect(containerData: Data) throws -> ContainerInfo {
+        var reader = try BinaryReader(containerData)
+
+        try validateMagicAndVersion(using: &reader)
+
+        let header = try readAndValidateHeader(using: &reader)
+        let keyIds = try readRecipientKeyIds(count: Int(header.recipientsCount), using: &reader)
+        try validateCipherSection(using: &reader)
+
+        guard reader.remainingCount == 0 else {
+            throw ContainerError.invalidFormat
+        }
+
+        return ContainerInfo(header: header, recipientKeyIds: keyIds)
+    }
+
     internal static func validate(containerData: Data) throws -> ContainerHeader {
         var reader = try BinaryReader(containerData)
 
@@ -87,6 +103,34 @@ internal enum ContainerV1Validator {
         }
 
         return headerLength
+    }
+
+    private static func readRecipientKeyIds(
+        count: Int,
+        using reader: inout BinaryReader
+    ) throws -> [Fingerprint] {
+        guard count >= 1, count <= ContainerV1Constants.maxRecipients else {
+            throw ContainerError.limitsExceeded
+        }
+
+        var keyIds: [Fingerprint] = []
+        keyIds.reserveCapacity(count)
+
+        for _ in 0 ..< count {
+            let keyIdBytes = try reader.readBytes(count: ContainerV1Constants.recipientKeyIdByteCount)
+            guard let fingerprint = Fingerprint(rawValue: keyIdBytes) else {
+                throw ContainerError.invalidFormat
+            }
+            keyIds.append(fingerprint)
+
+            let kemLen = try readNonZeroLimitedUInt16(using: &reader, max: ContainerV1Constants.maxKEMCiphertextSize)
+            try reader.skip(count: kemLen)
+
+            let wrappedLen = try readNonZeroLimitedUInt16(using: &reader, max: ContainerV1Constants.maxWrappedDEKSize)
+            try reader.skip(count: wrappedLen)
+        }
+
+        return keyIds
     }
 
     private static func validateRecipientsSection(count: Int, using reader: inout BinaryReader) throws {
