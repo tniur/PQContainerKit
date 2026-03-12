@@ -1,8 +1,8 @@
 //
-//  MLKEM768KEMTests.swift
+//  XWingKEMTests.swift
 //  PQContainerKit
 //
-//  Created by Pavel Bobkov on 21.02.2026.
+//  Created by Pavel Bobkov on 12.03.2026.
 //
 
 import CryptoKit
@@ -10,14 +10,14 @@ import Foundation
 @testable import PQContainerKit
 import Testing
 
-@Suite("CryptoCore: ML-KEM-768 (KEM)")
-struct MLKEM768KEMTests {
+@Suite("CryptoCore: X-Wing (KEM)")
+struct XWingKEMTests {
     @Test("Encapsulate/decapsulate yields identical shared secret")
     func kemCorrectnessUT04() throws {
-        let pair = try MLKEM768.generateKeyPair()
+        let pair = try XWing.generateKeyPair()
 
-        let kem = try MLKEM768.encapsulate(to: pair.publicKey)
-        let ss2 = try MLKEM768.decapsulate(
+        let kem = try XWing.encapsulate(to: pair.publicKey)
+        let ss2 = try XWing.decapsulate(
             privateKey: pair.privateKey,
             ciphertext: kem.ciphertext
         )
@@ -27,11 +27,11 @@ struct MLKEM768KEMTests {
 
     @Test("Decapsulate with different private key yields different shared secret")
     func kemIsolationUT05() throws {
-        let keyPair1 = try MLKEM768.generateKeyPair()
-        let keyPair2 = try MLKEM768.generateKeyPair()
+        let keyPair1 = try XWing.generateKeyPair()
+        let keyPair2 = try XWing.generateKeyPair()
 
-        let kem = try MLKEM768.encapsulate(to: keyPair1.publicKey)
-        let ssWrong = try MLKEM768.decapsulate(
+        let kem = try XWing.encapsulate(to: keyPair1.publicKey)
+        let ssWrong = try XWing.decapsulate(
             privateKey: keyPair2.privateKey,
             ciphertext: kem.ciphertext
         )
@@ -42,7 +42,7 @@ struct MLKEM768KEMTests {
     @Test("Ciphertext initializer rejects invalid length")
     func ciphertextValidation() {
         #expect(throws: PQContainerKit.ContainerKitError.invalidCiphertextRepresentation) {
-            _ = try MLKEM768.Ciphertext(rawRepresentation: Data(repeating: 0, count: 1))
+            _ = try XWing.Ciphertext(rawRepresentation: Data(repeating: 0, count: 1))
         }
     }
 }

@@ -12,8 +12,8 @@ import Security
 public enum ContainerV1 {
     public static func createContainer(
         plaintext: Data,
-        recipients: [MLKEM768.PublicKey],
-        owner: MLKEM768.PublicKey,
+        recipients: [XWing.PublicKey],
+        owner: XWing.PublicKey,
         containerID: ContainerID = .random()
     ) throws -> Data {
         guard UInt64(plaintext.count) <= ContainerV1Constants.maxCiphertextSize else {
@@ -35,7 +35,7 @@ public enum ContainerV1 {
             let cipherParts = try CipherParts(iv: iv, ciphertext: ciphertext, authTag: tag)
 
             let header = try ContainerHeader(
-                algId: .mlkem768HkdfSha256Aes256Gcm,
+                algId: .xwingHkdfSha256Aes256Gcm,
                 containerID: containerID,
                 recipientsCount: UInt16(entries.count)
             )
@@ -50,8 +50,8 @@ public enum ContainerV1 {
 
     public static func openContainer(
         containerData: Data,
-        myPrivateKey: MLKEM768.PrivateKey,
-        myPublicKey: MLKEM768.PublicKey
+        myPrivateKey: XWing.PrivateKey,
+        myPublicKey: XWing.PublicKey
     ) throws -> Data {
         do {
             let decoded = try ContainerV1Decoder.decode(containerData)
@@ -61,8 +61,8 @@ public enum ContainerV1 {
                 throw ContainerError.accessDenied
             }
 
-            let ct = try MLKEM768.Ciphertext(rawRepresentation: entry.kemCiphertext)
-            let ss = try MLKEM768.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
+            let ct = try XWing.Ciphertext(rawRepresentation: entry.kemCiphertext)
+            let ss = try XWing.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
 
             let dek = try DEKWrap.unwrapDEK(
                 wrappedDEK: entry.wrappedDEK,
@@ -85,11 +85,11 @@ public enum ContainerV1 {
     }
 
     private static func makeUniqueRecipients(
-        owner: MLKEM768.PublicKey,
-        recipients: [MLKEM768.PublicKey]
-    ) -> [MLKEM768.PublicKey] {
+        owner: XWing.PublicKey,
+        recipients: [XWing.PublicKey]
+    ) -> [XWing.PublicKey] {
         var seen = Set<Fingerprint>()
-        var unique: [MLKEM768.PublicKey] = []
+        var unique: [XWing.PublicKey] = []
 
         if seen.insert(owner.fingerprint).inserted {
             unique.append(owner)
@@ -104,9 +104,9 @@ public enum ContainerV1 {
 
     public static func rekeyContainer(
         containerData: Data,
-        remainingRecipients: [MLKEM768.PublicKey],
-        myPrivateKey: MLKEM768.PrivateKey,
-        myPublicKey: MLKEM768.PublicKey
+        remainingRecipients: [XWing.PublicKey],
+        myPrivateKey: XWing.PrivateKey,
+        myPublicKey: XWing.PublicKey
     ) throws -> Data {
         do {
             let decoded = try ContainerV1Decoder.decode(containerData)
@@ -116,8 +116,8 @@ public enum ContainerV1 {
                 throw ContainerError.accessDenied
             }
 
-            let ct = try MLKEM768.Ciphertext(rawRepresentation: entry.kemCiphertext)
-            let ss = try MLKEM768.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
+            let ct = try XWing.Ciphertext(rawRepresentation: entry.kemCiphertext)
+            let ss = try XWing.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
 
             let oldDEK = try DEKWrap.unwrapDEK(
                 wrappedDEK: entry.wrappedDEK,
@@ -170,7 +170,7 @@ public enum ContainerV1 {
     }
 
     private static func makeRecipientEntries(
-        recipients: [MLKEM768.PublicKey],
+        recipients: [XWing.PublicKey],
         dek: SymmetricKey,
         containerID: ContainerID
     ) throws -> [RecipientEntry] {
@@ -179,7 +179,7 @@ public enum ContainerV1 {
 
         for pk in recipients {
             let recipientKeyId = pk.fingerprint
-            let kem = try MLKEM768.encapsulate(to: pk)
+            let kem = try XWing.encapsulate(to: pk)
             let wrappedDEK = try DEKWrap.wrapDEK(
                 dek: dek,
                 containerID: containerID.rawValue,

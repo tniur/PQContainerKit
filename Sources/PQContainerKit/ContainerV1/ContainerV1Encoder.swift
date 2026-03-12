@@ -13,7 +13,7 @@ internal enum ContainerV1Encoder {
         recipients: [RecipientEntry],
         cipherParts: CipherParts
     ) throws -> Data {
-        guard header.algId == .mlkem768HkdfSha256Aes256Gcm else {
+        guard header.algId == .xwingHkdfSha256Aes256Gcm else {
             throw ContainerError.invalidFormat
         }
 

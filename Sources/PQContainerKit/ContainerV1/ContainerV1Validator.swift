@@ -65,7 +65,7 @@ internal enum ContainerV1Validator {
             reserved: reserved
         )
 
-        guard header.algId == .mlkem768HkdfSha256Aes256Gcm else {
+        guard header.algId == .xwingHkdfSha256Aes256Gcm else {
             throw ContainerError.invalidFormat
         }
 

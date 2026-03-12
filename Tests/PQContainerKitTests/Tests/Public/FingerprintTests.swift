@@ -13,7 +13,7 @@ import Testing
 struct FingerprintTests {
     @Test("Fingerprint is 32 bytes and deterministic for a key")
     func fingerprintBasics() throws {
-        let pair = try MLKEM768.generateKeyPair()
+        let pair = try XWing.generateKeyPair()
         let fp1 = pair.publicKey.fingerprint
         let fp2 = pair.publicKey.fingerprint
 
@@ -23,8 +23,8 @@ struct FingerprintTests {
 
     @Test("Fingerprint preserved across raw export/import")
     func fingerprintConsistentAcrossImport() throws {
-        let pair = try MLKEM768.generateKeyPair()
-        let imported = try MLKEM768.PublicKey(
+        let pair = try XWing.generateKeyPair()
+        let imported = try XWing.PublicKey(
             rawRepresentation: pair.publicKey.rawRepresentation
         )
 

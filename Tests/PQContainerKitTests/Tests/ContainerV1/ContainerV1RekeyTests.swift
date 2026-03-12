@@ -13,9 +13,9 @@ import Testing
 struct ContainerV1RekeyTests {
     @Test("rekeyContainer revokes removed recipient")
     func rekeyRevokesRecipient() throws {
-        let owner = try MLKEM768.generateKeyPair()
-        let alice = try MLKEM768.generateKeyPair()
-        let bob = try MLKEM768.generateKeyPair()
+        let owner = try XWing.generateKeyPair()
+        let alice = try XWing.generateKeyPair()
+        let bob = try XWing.generateKeyPair()
 
         let plaintext = Data("top-secret".utf8)
         let containerData = try ContainerV1.createContainer(

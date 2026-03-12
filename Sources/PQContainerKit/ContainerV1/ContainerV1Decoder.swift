@@ -24,7 +24,7 @@ internal enum ContainerV1Decoder {
         let headerLength = try readAndValidateHeaderLength(using: &reader)
         let header = try decodeHeader(from: reader.readBytes(count: Int(headerLength)))
 
-        guard header.algId == .mlkem768HkdfSha256Aes256Gcm else {
+        guard header.algId == .xwingHkdfSha256Aes256Gcm else {
             throw ContainerError.invalidFormat
         }
 
