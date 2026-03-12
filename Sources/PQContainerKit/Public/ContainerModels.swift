@@ -90,6 +90,21 @@ public struct RecipientEntry: Hashable, Sendable {
     }
 }
 
+public struct ContainerInfo: Hashable, Sendable {
+    public let header: ContainerHeader
+    public let recipientKeyIds: [Fingerprint]
+}
+
+public extension ContainerInfo {
+    func containsRecipient(_ publicKey: XWing.PublicKey) -> Bool {
+        recipientKeyIds.contains(publicKey.fingerprint)
+    }
+
+    func containsRecipient(_ fingerprint: Fingerprint) -> Bool {
+        recipientKeyIds.contains(fingerprint)
+    }
+}
+
 public struct CipherParts: Hashable, Sendable {
     public static let ivByteCount = 12
     public static let authTagByteCount = 16

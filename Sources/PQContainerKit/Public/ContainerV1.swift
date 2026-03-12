@@ -10,6 +10,10 @@ import Foundation
 import Security
 
 public enum ContainerV1 {
+    public static func inspectContainer(_ containerData: Data) throws -> ContainerInfo {
+        try ContainerV1Validator.inspect(containerData: containerData)
+    }
+
     public static func createContainer(
         plaintext: Data,
         recipients: [XWing.PublicKey],
