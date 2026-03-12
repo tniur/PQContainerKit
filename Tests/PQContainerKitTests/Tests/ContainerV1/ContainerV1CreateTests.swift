@@ -13,8 +13,8 @@ import Testing
 struct ContainerV1CreateTests {
     @Test("createContainer produces v1 container that passes structural validation")
     func createContainerProducesValidFormat() throws {
-        let owner = try MLKEM768.generateKeyPair()
-        let alice = try MLKEM768.generateKeyPair()
+        let owner = try XWing.generateKeyPair()
+        let alice = try XWing.generateKeyPair()
 
         let plaintext = Data("hello".utf8)
         let containerData = try ContainerV1.createContainer(
@@ -24,7 +24,7 @@ struct ContainerV1CreateTests {
         )
 
         let header = try ContainerV1Validator.validate(containerData: containerData)
-        #expect(header.algId == .mlkem768HkdfSha256Aes256Gcm)
+        #expect(header.algId == .xwingHkdfSha256Aes256Gcm)
         #expect(header.recipientsCount == 2)
 
         let decoded = try ContainerV1Decoder.decode(containerData)
@@ -33,8 +33,8 @@ struct ContainerV1CreateTests {
 
     @Test("createContainer deduplicates recipients by fingerprint and always includes owner")
     func createContainerDeduplicatesRecipients() throws {
-        let owner = try MLKEM768.generateKeyPair()
-        let alice = try MLKEM768.generateKeyPair()
+        let owner = try XWing.generateKeyPair()
+        let alice = try XWing.generateKeyPair()
 
         let plaintext = Data("hello".utf8)
         let containerData = try ContainerV1.createContainer(

@@ -40,7 +40,7 @@ struct ContainerV1ValidationTests {
     private func makeHeader(recipientsCount: UInt16) -> Data {
         var writer = BinaryWriter(capacity: ContainerV1Constants.headerFixedByteCount)
 
-        writer.appendUInt16LE(AlgId.mlkem768HkdfSha256Aes256Gcm.rawValue)
+        writer.appendUInt16LE(AlgId.xwingHkdfSha256Aes256Gcm.rawValue)
         writer.append(Data(repeating: 0x00, count: ContainerID.byteCount))
         writer.appendUInt16LE(recipientsCount)
         writer.appendUInt32LE(0)
