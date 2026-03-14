@@ -25,9 +25,8 @@ internal enum ContainerV1Constants {
     static let maxKEMCiphertextSize: Int = 2048
     static let maxWrappedDEKSize: Int = 128
 
-    // MARK: - Cipher parts
+    // MARK: - Chunked cipher
 
-    static let ivByteCount: Int = AESGCM.nonceByteCount
-    static let authTagByteCount: Int = AESGCM.tagByteCount
-    static let maxCiphertextSize: UInt64 = 512 * 1024 * 1024
+    static let defaultChunkSize: Int = 1_048_576
+    static let maxChunkSize: UInt32 = 64 * 1024 * 1024
 }
