@@ -35,7 +35,8 @@ public enum ContainerV1 {
             let iv = try randomBytes(count: CipherParts.ivByteCount)
             let entries = try makeRecipientEntries(recipients: uniqueRecipients, dek: dek, containerID: containerID)
 
-            let (ciphertext, tag) = try AESGCM.seal(plaintext, key: dek, nonce: iv)
+            let paddedPayload = try Padme.pad(plaintext)
+            let (ciphertext, tag) = try AESGCM.seal(paddedPayload, key: dek, nonce: iv)
             let cipherParts = try CipherParts(iv: iv, ciphertext: ciphertext, authTag: tag)
 
             let header = try ContainerHeader(
@@ -75,12 +76,14 @@ public enum ContainerV1 {
                 sharedSecret: ss
             )
 
-            return try AESGCM.open(
+            let paddedPayload = try AESGCM.open(
                 ciphertext: decoded.cipherParts.ciphertext,
                 tag: decoded.cipherParts.authTag,
                 key: dek,
                 nonce: decoded.cipherParts.iv
             )
+
+            return try Padme.unpad(paddedPayload)
         } catch let error as ContainerError {
             throw error
         } catch {
@@ -130,12 +133,14 @@ public enum ContainerV1 {
                 sharedSecret: ss
             )
 
-            let plaintext = try AESGCM.open(
+            let paddedPayload = try AESGCM.open(
                 ciphertext: decoded.cipherParts.ciphertext,
                 tag: decoded.cipherParts.authTag,
                 key: oldDEK,
                 nonce: decoded.cipherParts.iv
             )
+
+            let plaintext = try Padme.unpad(paddedPayload)
 
             guard UInt64(plaintext.count) <= ContainerV1Constants.maxCiphertextSize else {
                 throw ContainerError.limitsExceeded
@@ -156,7 +161,8 @@ public enum ContainerV1 {
                 dek: dek, containerID: decoded.header.containerID
             )
 
-            let (ciphertext, tag) = try AESGCM.seal(plaintext, key: dek, nonce: iv)
+            let newPaddedPayload = try Padme.pad(plaintext)
+            let (ciphertext, tag) = try AESGCM.seal(newPaddedPayload, key: dek, nonce: iv)
             let cipherParts = try CipherParts(iv: iv, ciphertext: ciphertext, authTag: tag)
 
             let header = try ContainerHeader(
