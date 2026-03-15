@@ -20,32 +20,11 @@ public enum ContainerV1 {
         owner: XWing.PublicKey,
         containerID: ContainerID = .random()
     ) throws -> Data {
-        guard UInt64(plaintext.count) <= ContainerV1Constants.maxCiphertextSize else {
-            throw ContainerError.limitsExceeded
-        }
-
         let uniqueRecipients = makeUniqueRecipients(owner: owner, recipients: recipients)
         guard uniqueRecipients.count <= ContainerV1Constants.maxRecipients else { throw ContainerError.limitsExceeded }
 
         do {
-            var dekBytes = try randomBytes(count: 32)
-            let dek = SymmetricKey(data: dekBytes)
-            dekBytes.resetBytes(in: 0 ..< dekBytes.count)
-
-            let iv = try randomBytes(count: CipherParts.ivByteCount)
-            let entries = try makeRecipientEntries(recipients: uniqueRecipients, dek: dek, containerID: containerID)
-
-            let paddedPayload = try Padme.pad(plaintext)
-            let (ciphertext, tag) = try AESGCM.seal(paddedPayload, key: dek, nonce: iv)
-            let cipherParts = try CipherParts(iv: iv, ciphertext: ciphertext, authTag: tag)
-
-            let header = try ContainerHeader(
-                algId: .xwingHkdfSha256Aes256Gcm,
-                containerID: containerID,
-                recipientsCount: UInt16(entries.count)
-            )
-
-            return try ContainerV1Encoder.encode(header: header, recipients: entries, cipherParts: cipherParts)
+            return try encryptPayload(plaintext, recipients: uniqueRecipients, containerID: containerID)
         } catch let error as ContainerError {
             throw error
         } catch {
@@ -60,30 +39,7 @@ public enum ContainerV1 {
     ) throws -> Data {
         do {
             let decoded = try ContainerV1Decoder.decode(containerData)
-            let myKeyId = myPublicKey.fingerprint
-
-            guard let entry = decoded.recipients.first(where: { $0.recipientKeyId == myKeyId }) else {
-                throw ContainerError.accessDenied
-            }
-
-            let ct = try XWing.Ciphertext(rawRepresentation: entry.kemCiphertext)
-            let ss = try XWing.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
-
-            let dek = try DEKWrap.unwrapDEK(
-                wrappedDEK: entry.wrappedDEK,
-                containerID: decoded.header.containerID.rawValue,
-                recipientKeyId: myKeyId.rawValue,
-                sharedSecret: ss
-            )
-
-            let paddedPayload = try AESGCM.open(
-                ciphertext: decoded.cipherParts.ciphertext,
-                tag: decoded.cipherParts.authTag,
-                key: dek,
-                nonce: decoded.cipherParts.iv
-            )
-
-            return try Padme.unpad(paddedPayload)
+            return try decryptPayload(from: decoded, myPrivateKey: myPrivateKey, myPublicKey: myPublicKey)
         } catch let error as ContainerError {
             throw error
         } catch {
@@ -117,66 +73,93 @@ public enum ContainerV1 {
     ) throws -> Data {
         do {
             let decoded = try ContainerV1Decoder.decode(containerData)
-            let myKeyId = myPublicKey.fingerprint
-
-            guard let entry = decoded.recipients.first(where: { $0.recipientKeyId == myKeyId }) else {
-                throw ContainerError.accessDenied
-            }
-
-            let ct = try XWing.Ciphertext(rawRepresentation: entry.kemCiphertext)
-            let ss = try XWing.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
-
-            let oldDEK = try DEKWrap.unwrapDEK(
-                wrappedDEK: entry.wrappedDEK,
-                containerID: decoded.header.containerID.rawValue,
-                recipientKeyId: myKeyId.rawValue,
-                sharedSecret: ss
-            )
-
-            let paddedPayload = try AESGCM.open(
-                ciphertext: decoded.cipherParts.ciphertext,
-                tag: decoded.cipherParts.authTag,
-                key: oldDEK,
-                nonce: decoded.cipherParts.iv
-            )
-
-            let plaintext = try Padme.unpad(paddedPayload)
-
-            guard UInt64(plaintext.count) <= ContainerV1Constants.maxCiphertextSize else {
-                throw ContainerError.limitsExceeded
-            }
+            let plaintext = try decryptPayload(from: decoded, myPrivateKey: myPrivateKey, myPublicKey: myPublicKey)
 
             let uniqueRecipients = makeUniqueRecipients(owner: myPublicKey, recipients: remainingRecipients)
             guard uniqueRecipients.count <= ContainerV1Constants.maxRecipients else {
                 throw ContainerError.limitsExceeded
             }
 
-            var dekBytes = try randomBytes(count: 32)
-            let dek = SymmetricKey(data: dekBytes)
-            dekBytes.resetBytes(in: 0 ..< dekBytes.count)
-
-            let iv = try randomBytes(count: CipherParts.ivByteCount)
-            let entries = try makeRecipientEntries(
+            return try encryptPayload(
+                plaintext,
                 recipients: uniqueRecipients,
-                dek: dek, containerID: decoded.header.containerID
-            )
-
-            let newPaddedPayload = try Padme.pad(plaintext)
-            let (ciphertext, tag) = try AESGCM.seal(newPaddedPayload, key: dek, nonce: iv)
-            let cipherParts = try CipherParts(iv: iv, ciphertext: ciphertext, authTag: tag)
-
-            let header = try ContainerHeader(
-                algId: decoded.header.algId,
                 containerID: decoded.header.containerID,
-                recipientsCount: UInt16(entries.count)
+                algId: decoded.header.algId
             )
-
-            return try ContainerV1Encoder.encode(header: header, recipients: entries, cipherParts: cipherParts)
         } catch let error as ContainerError {
             throw error
         } catch {
             throw ContainerError.cannotOpen
         }
+    }
+
+    private static func decryptPayload(
+        from decoded: DecodedContainerV1,
+        myPrivateKey: XWing.PrivateKey,
+        myPublicKey: XWing.PublicKey
+    ) throws -> Data {
+        let myKeyId = myPublicKey.fingerprint
+
+        guard let entry = decoded.recipients.first(where: { $0.recipientKeyId == myKeyId }) else {
+            throw ContainerError.accessDenied
+        }
+
+        let ct = try XWing.Ciphertext(rawRepresentation: entry.kemCiphertext)
+        let ss = try XWing.decapsulate(privateKey: myPrivateKey, ciphertext: ct)
+
+        let dek = try DEKWrap.unwrapDEK(
+            wrappedDEK: entry.wrappedDEK,
+            containerID: decoded.header.containerID.rawValue,
+            recipientKeyId: myKeyId.rawValue,
+            sharedSecret: ss
+        )
+
+        let paddedPayload = try ChunkCrypto.decryptPayload(
+            chunks: decoded.cipherData.chunks,
+            key: dek,
+            baseNonce: decoded.cipherData.baseNonce,
+            containerID: decoded.header.containerID.rawValue
+        )
+
+        return try Padme.unpad(paddedPayload)
+    }
+
+    private static func encryptPayload(
+        _ plaintext: Data,
+        recipients: [XWing.PublicKey],
+        containerID: ContainerID,
+        algId: AlgId = .xwingHkdfSha256Aes256Gcm
+    ) throws -> Data {
+        var dekBytes = try randomBytes(count: 32)
+        let dek = SymmetricKey(data: dekBytes)
+        dekBytes.resetBytes(in: 0 ..< dekBytes.count)
+
+        let entries = try makeRecipientEntries(recipients: recipients, dek: dek, containerID: containerID)
+
+        let paddedPayload = try Padme.pad(plaintext)
+        let baseNonce = try randomBytes(count: ChunkCrypto.baseNonceByteCount)
+        let chunks = try ChunkCrypto.encryptPayload(
+            paddedPayload,
+            key: dek,
+            baseNonce: baseNonce,
+            chunkSize: ContainerV1Constants.defaultChunkSize,
+            containerID: containerID.rawValue
+        )
+
+        let cipherData = ChunkedCipherData(
+            baseNonce: baseNonce,
+            chunkSize: UInt32(ContainerV1Constants.defaultChunkSize),
+            totalPayloadSize: UInt64(paddedPayload.count),
+            chunks: chunks
+        )
+
+        let header = try ContainerHeader(
+            algId: algId,
+            containerID: containerID,
+            recipientsCount: UInt16(entries.count)
+        )
+
+        return try ContainerV1Encoder.encode(header: header, recipients: entries, cipherData: cipherData)
     }
 
     private static func makeRecipientEntries(

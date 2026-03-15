@@ -35,7 +35,7 @@ internal enum ContainerV1Decoder {
         }
 
         let recipients = try readRecipients(count: Int(header.recipientsCount), using: &reader)
-        let cipherParts = try readCipherParts(using: &reader)
+        let cipherData = try readChunkedCipherData(using: &reader)
 
         guard reader.remainingCount == 0 else {
             throw ContainerError.invalidFormat
@@ -44,7 +44,7 @@ internal enum ContainerV1Decoder {
         return DecodedContainerV1(
             header: header,
             recipients: recipients,
-            cipherParts: cipherParts
+            cipherData: cipherData
         )
     }
 
@@ -141,20 +141,46 @@ internal enum ContainerV1Decoder {
         return value
     }
 
-    private static func readCipherParts(using reader: inout BinaryReader) throws -> CipherParts {
-        let iv = try reader.readBytes(count: ContainerV1Constants.ivByteCount)
+    private static func readChunkedCipherData(using reader: inout BinaryReader) throws -> ChunkedCipherData {
+        let baseNonce = try reader.readBytes(count: ChunkCrypto.baseNonceByteCount)
 
-        let ciphertextLength = try reader.readUInt64LE()
+        let chunkSize = try reader.readUInt32LE()
 
-        guard ciphertextLength <= ContainerV1Constants.maxCiphertextSize,
-              ciphertextLength <= UInt64(Int.max)
-        else {
+        guard chunkSize > 0, chunkSize <= ContainerV1Constants.maxChunkSize else {
             throw ContainerError.limitsExceeded
         }
 
-        let ciphertext = try reader.readBytes(count: Int(ciphertextLength))
-        let authTag = try reader.readBytes(count: ContainerV1Constants.authTagByteCount)
+        let totalPayloadSize = try reader.readUInt64LE()
 
-        return try CipherParts(iv: iv, ciphertext: ciphertext, authTag: authTag)
+        guard totalPayloadSize <= UInt64(Int.max) else {
+            throw ContainerError.limitsExceeded
+        }
+
+        let totalSize = Int(totalPayloadSize)
+        let cs = Int(chunkSize)
+        let chunkCount = totalSize > 0 ? (totalSize + cs - 1) / cs : 0
+
+        guard chunkCount > 0 else {
+            throw ContainerError.invalidFormat
+        }
+
+        var chunks: [EncryptedChunk] = []
+        chunks.reserveCapacity(chunkCount)
+
+        for i in 0 ..< chunkCount {
+            let isLast = i == chunkCount - 1
+            let ctSize = isLast ? totalSize - i * cs : cs
+            let ct = try reader.readBytes(count: ctSize)
+            let tag = try reader.readBytes(count: AESGCM.tagByteCount)
+
+            chunks.append(EncryptedChunk(ciphertext: ct, tag: tag))
+        }
+
+        return ChunkedCipherData(
+            baseNonce: baseNonce,
+            chunkSize: chunkSize,
+            totalPayloadSize: totalPayloadSize,
+            chunks: chunks
+        )
     }
 }

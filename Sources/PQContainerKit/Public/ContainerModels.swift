@@ -104,26 +104,3 @@ public extension ContainerInfo {
         recipientKeyIds.contains(fingerprint)
     }
 }
-
-public struct CipherParts: Hashable, Sendable {
-    public static let ivByteCount = 12
-    public static let authTagByteCount = 16
-
-    public let iv: Data
-    public let ciphertext: Data
-    public let authTag: Data
-
-    public init(iv: Data, ciphertext: Data, authTag: Data) throws {
-        guard iv.count == Self.ivByteCount else {
-            throw ContainerError.invalidFormat
-        }
-
-        guard authTag.count == Self.authTagByteCount else {
-            throw ContainerError.invalidFormat
-        }
-
-        self.iv = iv
-        self.ciphertext = ciphertext
-        self.authTag = authTag
-    }
-}

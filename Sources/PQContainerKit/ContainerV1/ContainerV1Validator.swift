@@ -15,7 +15,7 @@ internal enum ContainerV1Validator {
 
         let header = try readAndValidateHeader(using: &reader)
         let keyIds = try readRecipientKeyIds(count: Int(header.recipientsCount), using: &reader)
-        try validateCipherSection(using: &reader)
+        try validateChunkedCipherSection(using: &reader)
 
         guard reader.remainingCount == 0 else {
             throw ContainerError.invalidFormat
@@ -31,7 +31,7 @@ internal enum ContainerV1Validator {
 
         let header = try readAndValidateHeader(using: &reader)
         try validateRecipientsSection(count: Int(header.recipientsCount), using: &reader)
-        try validateCipherSection(using: &reader)
+        try validateChunkedCipherSection(using: &reader)
 
         guard reader.remainingCount == 0 else {
             throw ContainerError.invalidFormat
@@ -149,16 +149,34 @@ internal enum ContainerV1Validator {
         }
     }
 
-    private static func validateCipherSection(using reader: inout BinaryReader) throws {
-        try reader.skip(count: ContainerV1Constants.ivByteCount)
+    private static func validateChunkedCipherSection(using reader: inout BinaryReader) throws {
+        try reader.skip(count: ChunkCrypto.baseNonceByteCount)
 
-        let ciphertextLength = try readLimitedUInt64(using: &reader, max: ContainerV1Constants.maxCiphertextSize)
-        guard ciphertextLength <= UInt64(Int.max) else {
+        let chunkSize = try reader.readUInt32LE()
+
+        guard chunkSize > 0, chunkSize <= ContainerV1Constants.maxChunkSize else {
             throw ContainerError.limitsExceeded
         }
 
-        try reader.skip(count: Int(ciphertextLength))
-        try reader.skip(count: ContainerV1Constants.authTagByteCount)
+        let totalPayloadSize = try reader.readUInt64LE()
+
+        guard totalPayloadSize <= UInt64(Int.max) else {
+            throw ContainerError.limitsExceeded
+        }
+
+        let totalSize = Int(totalPayloadSize)
+        let cs = Int(chunkSize)
+        let chunkCount = totalSize > 0 ? (totalSize + cs - 1) / cs : 0
+
+        guard chunkCount > 0 else {
+            throw ContainerError.invalidFormat
+        }
+
+        for i in 0 ..< chunkCount {
+            let isLast = i == chunkCount - 1
+            let ctSize = isLast ? totalSize - i * cs : cs
+            try reader.skip(count: ctSize + AESGCM.tagByteCount)
+        }
     }
 
     private static func readNonZeroLimitedUInt16(using reader: inout BinaryReader, max: Int) throws -> Int {
@@ -169,16 +187,6 @@ internal enum ContainerV1Validator {
         }
 
         if value > max {
-            throw ContainerError.limitsExceeded
-        }
-
-        return value
-    }
-
-    private static func readLimitedUInt64(using reader: inout BinaryReader, max: UInt64) throws -> UInt64 {
-        let value = try reader.readUInt64LE()
-
-        guard value <= max else {
             throw ContainerError.limitsExceeded
         }
 

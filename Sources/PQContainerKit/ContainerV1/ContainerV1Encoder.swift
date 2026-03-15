@@ -11,7 +11,7 @@ internal enum ContainerV1Encoder {
     internal static func encode(
         header: ContainerHeader,
         recipients: [RecipientEntry],
-        cipherParts: CipherParts
+        cipherData: ChunkedCipherData
     ) throws -> Data {
         guard header.algId == .xwingHkdfSha256Aes256Gcm else {
             throw ContainerError.invalidFormat
@@ -41,15 +41,12 @@ internal enum ContainerV1Encoder {
 
         let recipientsBytesTotal = try validateAndEstimateRecipientsBytes(recipients)
 
-        let ciphertextCount = cipherParts.ciphertext.count
-        guard UInt64(ciphertextCount) <= ContainerV1Constants.maxCiphertextSize else {
-            throw ContainerError.limitsExceeded
-        }
+        try validateCipherData(cipherData)
 
         let capacity = estimateCapacity(
             headerBytesCount: headerBytes.count,
             recipientsBytesCount: recipientsBytesTotal,
-            ciphertextCount: ciphertextCount
+            cipherData: cipherData
         )
 
         var writer = BinaryWriter(capacity: capacity)
@@ -60,22 +57,41 @@ internal enum ContainerV1Encoder {
         writer.appendUInt32LE(UInt32(headerBytes.count))
         writer.append(headerBytes)
 
+        writeRecipients(recipients, to: &writer)
+        writeCipherData(cipherData, to: &writer)
+
+        return writer.data
+    }
+
+    private static func validateCipherData(_ cipherData: ChunkedCipherData) throws {
+        guard cipherData.baseNonce.count == ChunkCrypto.baseNonceByteCount else {
+            throw ContainerError.invalidFormat
+        }
+
+        guard !cipherData.chunks.isEmpty else {
+            throw ContainerError.invalidFormat
+        }
+    }
+
+    private static func writeRecipients(_ recipients: [RecipientEntry], to writer: inout BinaryWriter) {
         for entry in recipients {
             writer.append(entry.recipientKeyId.rawValue)
-
             writer.appendUInt16LE(UInt16(entry.kemCiphertext.count))
             writer.append(entry.kemCiphertext)
-
             writer.appendUInt16LE(UInt16(entry.wrappedDEK.count))
             writer.append(entry.wrappedDEK)
         }
+    }
 
-        writer.append(cipherParts.iv)
-        writer.appendUInt64LE(UInt64(ciphertextCount))
-        writer.append(cipherParts.ciphertext)
-        writer.append(cipherParts.authTag)
+    private static func writeCipherData(_ cipherData: ChunkedCipherData, to writer: inout BinaryWriter) {
+        writer.append(cipherData.baseNonce)
+        writer.appendUInt32LE(cipherData.chunkSize)
+        writer.appendUInt64LE(cipherData.totalPayloadSize)
 
-        return writer.data
+        for chunk in cipherData.chunks {
+            writer.append(chunk.ciphertext)
+            writer.append(chunk.tag)
+        }
     }
 
     private static func encodeHeader(_ header: ContainerHeader) throws -> Data {
@@ -122,17 +138,19 @@ internal enum ContainerV1Encoder {
     private static func estimateCapacity(
         headerBytesCount: Int,
         recipientsBytesCount: Int,
-        ciphertextCount: Int
+        cipherData: ChunkedCipherData
     ) -> Int {
         let fixed =
             ContainerV1Constants.magic.count +
             2 +
             4 +
             headerBytesCount +
-            ContainerV1Constants.ivByteCount +
-            8 +
-            ContainerV1Constants.authTagByteCount
+            ChunkCrypto.baseNonceByteCount +
+            4 +
+            8
 
-        return fixed + recipientsBytesCount + ciphertextCount
+        let chunksSize = Int(cipherData.totalPayloadSize) + cipherData.chunks.count * AESGCM.tagByteCount
+
+        return fixed + recipientsBytesCount + chunksSize
     }
 }
