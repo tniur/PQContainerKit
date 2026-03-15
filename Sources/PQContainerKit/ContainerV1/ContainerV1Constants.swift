@@ -25,6 +25,10 @@ internal enum ContainerV1Constants {
     static let maxKEMCiphertextSize: Int = 2048
     static let maxWrappedDEKSize: Int = 128
 
+    // MARK: - Flags
+
+    static let flagZlibCompression: UInt32 = 0x0001
+
     // MARK: - Chunked cipher
 
     static let defaultChunkSize: Int = 1_048_576
