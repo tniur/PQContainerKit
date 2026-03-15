@@ -121,7 +121,13 @@ public enum ContainerV1 {
             containerID: decoded.header.containerID.rawValue
         )
 
-        return try Padme.unpad(paddedPayload)
+        let maybeCompressed = try Padme.unpad(paddedPayload)
+
+        if decoded.header.flags & ContainerV1Constants.flagZlibCompression != 0 {
+            return try PayloadCompression.decompress(maybeCompressed)
+        }
+
+        return maybeCompressed
     }
 
     private static func encryptPayload(
@@ -130,13 +136,17 @@ public enum ContainerV1 {
         containerID: ContainerID,
         algId: AlgId = .xwingHkdfSha256Aes256Gcm
     ) throws -> Data {
+        let (payload, compressed) = try PayloadCompression.tryCompress(plaintext)
+        var flags: UInt32 = 0
+        if compressed { flags |= ContainerV1Constants.flagZlibCompression }
+
         var dekBytes = try randomBytes(count: 32)
         let dek = SymmetricKey(data: dekBytes)
         dekBytes.resetBytes(in: 0 ..< dekBytes.count)
 
         let entries = try makeRecipientEntries(recipients: recipients, dek: dek, containerID: containerID)
 
-        let paddedPayload = try Padme.pad(plaintext)
+        let paddedPayload = try Padme.pad(payload)
         let baseNonce = try randomBytes(count: ChunkCrypto.baseNonceByteCount)
         let chunks = try ChunkCrypto.encryptPayload(
             paddedPayload,
@@ -156,7 +166,8 @@ public enum ContainerV1 {
         let header = try ContainerHeader(
             algId: algId,
             containerID: containerID,
-            recipientsCount: UInt16(entries.count)
+            recipientsCount: UInt16(entries.count),
+            flags: flags
         )
 
         return try ContainerV1Encoder.encode(header: header, recipients: entries, cipherData: cipherData)
